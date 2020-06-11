@@ -1,0 +1,385 @@
+---
+title: "Untitled"
+author: "Office of Marketing and Brand Management"
+date: "6/11/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r knitr_setup, echo=FALSE, message=FALSE, warning=FALSE, cache=FALSE}
+
+library(rmarkdown)
+library(knitr)
+library(dplyr)
+library(salesforcer)
+library(knitr)
+library(RForcecom)
+library(tidyr)
+library(tinytex)
+
+
+```
+
+
+
+
+# FY20 November Senior Search 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# upload data
+SR_Nov_queried_records <- read.csv("C:/Users/christine.iyer/Box/Search Test/Tidied Data Sets/FY20_November_SR_JR.csv", header = T, stringsAsFactors = F)
+SR_Nov_LeadsUploaded <- read.csv("C:/Users/christine.iyer/Box/Search Test/SF Data/FY20_November_SR_JR_DeDuped_Upload.csv", header = T, stringsAsFactors = F)
+# filter SR
+SR_Nov_queried_records <-SR_Nov_queried_records %>% filter(TargetX_SRMb__Anticipated_Start_Year__c == 2020)
+
+
+SR_Nov_LeadsUploaded <- SR_Nov_LeadsUploaded %>% filter(Anticipated.Start.Year == 2020)
+
+# merge filtered data frames
+SR_Nov_trythis <- merge(SR_Nov_LeadsUploaded, SR_Nov_queried_records, by = "Email" )
+
+# categorize
+SR_Nov_trythisGrouped <- SR_Nov_trythis %>% mutate(
+  Vendor = ifelse(grepl('^N', Recruiting.Category), 'NRCCUA', 'College Board'),
+   Class = ifelse(grepl('SR', Recruiting.Category), 'Senior', 'Junior') ,
+    Geo = ifelse(grepl('O', Recruiting.Category), 'Out-of-State', 'In-State'))
+
+
+SR_Nov_trythisGroupedStatus <- SR_Nov_trythisGrouped %>% group_by(Vendor, Class, Geo,
+                                                    TargetX_SRMb__Status__c) %>% summarise(n = n())
+
+SR_Nov_trythisGroupedStatus <- SR_Nov_trythisGroupedStatus %>% spread(TargetX_SRMb__Status__c, n) %>% mutate_at(4:5, ~replace(., is.na(.), 0))
+
+SR_Nov_trythisGroupedStatus <- SR_Nov_trythisGroupedStatus %>%
+  group_by(Vendor, Class, Geo) %>% 
+  summarise(
+  Inquiry = (sum(Inquiry) + sum(Applicant)), 
+  Applicant = sum(Applicant))
+
+SR_Nov_LeadsUploaded <- SR_Nov_LeadsUploaded %>% 
+  mutate(
+  Vendor = ifelse(grepl('^N', Recruiting.Category), 'NRCCUA', 'College Board'),
+   Class = ifelse(grepl('SR', Recruiting.Category), 'Senior', 'Junior'),
+  Geo = ifelse(grepl('O', Recruiting.Category), 'Out-of-State', 'In-State')) %>% 
+  group_by(Geo,Class, Vendor
+           ) %>% summarise(Leads = n())
+
+SR_Nov_Final <- left_join(SR_Nov_LeadsUploaded, SR_Nov_trythisGroupedStatus)
+
+SR_Nov_Final <- SR_Nov_Final %>% 
+  mutate(Inquiry_Yield = 
+          paste0(round(Inquiry/Leads * 100,2), "%"),
+         App_Yield = 
+          paste0(round(Applicant/Leads * 100,2), "%")) 
+   
+kable(SR_Nov_Final)      
+```
+
+# FY20 November Junior Search 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# upload data
+JR_Nov_queried_records <- read.csv("C:/Users/christine.iyer/Box/Search Test/Tidied Data Sets/FY20_November_SR_JR.csv", header = T, stringsAsFactors = F)
+JR_Nov_LeadsUploaded <- read.csv("C:/Users/christine.iyer/Box/Search Test/SF Data/FY20_November_SR_JR_DeDuped_Upload.csv", header = T, stringsAsFactors = F)
+# filter SR
+JR_Nov_queried_records <-JR_Nov_queried_records %>% filter(TargetX_SRMb__Anticipated_Start_Year__c == 2021)
+
+
+JR_Nov_LeadsUploaded <- JR_Nov_LeadsUploaded %>% filter(Anticipated.Start.Year == 2021)
+
+# merge filtered data frames
+JR_Nov_trythis <- merge(JR_Nov_LeadsUploaded, JR_Nov_queried_records, by = "Email" )
+
+# categorize
+JR_Nov_trythisGrouped <- JR_Nov_trythis %>% mutate(
+  Vendor = ifelse(grepl('^N', Recruiting.Category), 'NRCCUA', 'College Board'),
+   Class = ifelse(grepl('SR', Recruiting.Category), 'Senior', 'Junior') ,
+    Geo = ifelse(grepl('O', Recruiting.Category), 'Out-of-State', 'In-State'))
+
+
+JR_Nov_trythisGroupedStatus <- JR_Nov_trythisGrouped %>% group_by(Vendor, Class, Geo,
+                                                    TargetX_SRMb__Status__c) %>% summarise(n = n())
+
+# JR_Nov_trythisGroupedStatus <- JR_Nov_trythisGroupedStatus %>% spread(TargetX_SRMb__Status__c, n) %>% mutate_at(4:5, ~replace(., is.na(.), 0))
+
+JR_Nov_trythisGroupedStatus <- JR_Nov_trythisGroupedStatus %>%
+  group_by(Vendor, Class, Geo) %>% 
+  summarise(
+  Inquiries = (sum(n) 
+  #              + sum(Applicant)), 
+  # Applicant = sum(Applicant)
+  ))
+
+JR_Nov_LeadsUploaded <- JR_Nov_LeadsUploaded %>% 
+  mutate(
+  Vendor = ifelse(grepl('^N', Recruiting.Category), 'NRCCUA', 'College Board'),
+   Class = ifelse(grepl('SR', Recruiting.Category), 'Senior', 'Junior'),
+  Geo = ifelse(grepl('O', Recruiting.Category), 'Out-of-State', 'In-State')) %>% 
+  group_by(Geo,Class, Vendor
+           ) %>% summarise(Leads = n())
+
+JR_Nov_Final <- left_join(JR_Nov_LeadsUploaded, JR_Nov_trythisGroupedStatus)
+
+JR_Nov_Final <- JR_Nov_Final %>% 
+  mutate(Inquiry_Yield = 
+          paste0(round(Inquiries/Leads * 100,2), "%")
+         # ,
+         # App_Yield = 
+         #  paste0(round(Applicant/Leads * 100,2), "%")
+         ) 
+   
+kable(JR_Nov_Final)      
+```
+
+# FY20 January Senior Search 
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+SR_Jan_queried_records <- read.csv("C:/Users/christine.iyer/Box/Search Test/Tidied Data Sets/FY20_January_SR.csv", header = T, stringsAsFactors = F)
+
+SR_Jan_queried_records <- SR_Jan_queried_records %>%
+  mutate(Geo = ifelse(Primary_State_Code__c == "ME", "In-State", "Out-of-State")) %>% filter(TargetX_SRMb__Anticipated_Start_Year__c == 2020)
+
+SR_Jan_LeadsUploaded <- read.csv("C:/Users/christine.iyer/Box/Search Test/SF Data/FY20_January_SR_DeDuped_Upload.csv", header = T, stringsAsFactors = F)
+SR_Jan_LeadsUploaded <- SR_Jan_LeadsUploaded %>% 
+  mutate(Geo = ifelse(Primary.State.Province == "Maine", "In-State", "Out-of-State"), 
+         Vendor = ifelse(Lead.Segment.NRCCUA == "", "CB", 
+                         ifelse(Lead.Segment.College.Board == "", "NRCCUA", "Both")))
+# %>%
+#   group_by(Geo, Vendor) %>% 
+#   summarise(Leads = n())
+SR_Jan_trythis <- merge(SR_Jan_LeadsUploaded, SR_Jan_queried_records, by = "Email" )
+
+
+
+SR_Jan_trythis <- SR_Jan_trythis %>% mutate(DateCollected = Sys.Date(), 
+                              Vendor = ifelse(Lead.Segment.NRCCUA == "", "CB", 
+                         ifelse(Lead.Segment.College.Board == "", "NRCCUA", "Both")))
+
+
+SR_Jan_trythisGroup <- SR_Jan_trythis %>% group_by(Geo = Geo.y, Vendor = Vendor, TargetX_SRMb__Status__c) %>% summarise(n = n()) %>% spread(TargetX_SRMb__Status__c,n) 
+SR_Jan_trythisGroup$Inquiry[is.na(SR_Jan_trythisGroup$Inquiry)] <- 0
+
+
+
+SR_Jan_trythisGroup <- SR_Jan_trythisGroup %>% mutate(Inquiry = sum(Applicant) + sum(Inquiry)) %>% select(Geo, Vendor, Inquiry, Applicant)
+
+#
+SR_Jan_LeadsUploaded <- SR_Jan_LeadsUploaded %>% 
+  group_by(Geo, Vendor
+           ) %>% summarise(Leads = n())
+
+
+SR_Jan_Conversion <- left_join(SR_Jan_LeadsUploaded,SR_Jan_trythisGroup %>% group_by(Geo, Vendor) %>% summarise(Inquiries = sum(Inquiry), Applicants = sum(Applicant)))
+SR_Jan_Conversion$Inquiries[is.na(SR_Jan_Conversion$Inquiries)] <- 0
+SR_Jan_Conversion$Applicants[is.na(SR_Jan_Conversion$Applicants)] <- 0
+kable(SR_Jan_Conversion %>% mutate(Inquiry_Yield = 
+          paste0(round(Inquiries/Leads * 100,2), "%"),
+         App_Yield = 
+          paste0(round(Applicants/Leads * 100,2), "%")))
+```
+
+# FY20 January Junior Search
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+JR_Jan_queried_records <- read.csv("C:/Users/christine.iyer/Box/Search Test/Tidied Data Sets/FY20_January_JR.csv", header = T, stringsAsFactors = F)
+
+JR_Jan_queried_records <- JR_Jan_queried_records %>%
+  mutate(Geo = ifelse(Primary_State_Code__c == "ME", "In-State", "Out-of-State")) %>% filter(TargetX_SRMb__Anticipated_Start_Year__c == 2021)
+
+JR_Jan_LeadsUploaded <- read.csv("C:/Users/christine.iyer/Box/Search Test/SF Data/FY20_January_JR_DeDuped_Upload.csv", header = T, stringsAsFactors = F)
+
+ 
+
+JR_Jan_LeadsUploaded <- JR_Jan_LeadsUploaded %>% 
+  mutate(Geo = ifelse(Primary.State.Province == "Maine", "In-State", "Out-of-State"), 
+         Vendor = ifelse(Lead.Segment.NRCCUA == "", "CB", 
+                         ifelse(Lead.Segment.College.Board == "", "NRCCUA", "Both")))
+# %>%
+#   group_by(Geo, Vendor) %>% 
+#   summarise(Leads = n())
+JR_Jan_trythis <- merge(JR_Jan_LeadsUploaded, JR_Jan_queried_records, by = "Email" )
+
+
+
+JR_Jan_trythis <- JR_Jan_trythis %>% mutate(DateCollected = Sys.Date(), 
+                              Vendor = ifelse(Lead.Segment.NRCCUA == "", "CB", 
+                         ifelse(Lead.Segment.College.Board == "", "NRCCUA", "Both")))
+
+
+JR_Jan_trythisGroup <- JR_Jan_trythis %>% group_by(Geo = Geo.y, Vendor = Vendor, TargetX_SRMb__Status__c) %>% summarise(n = n()) %>% spread(TargetX_SRMb__Status__c,n) 
+JR_Jan_trythisGroup$Inquiry[is.na(JR_Jan_trythisGroup$Inquiry)] <- 0
+
+
+
+JR_Jan_trythisGroup <- JR_Jan_trythisGroup %>% mutate(Inquiry =  sum(Inquiry)) %>% select(Geo, Vendor, Inquiry)
+
+#
+JR_Jan_LeadsUploaded <- JR_Jan_LeadsUploaded %>% 
+  group_by(Geo, Vendor
+           ) %>% summarise(Leads = n())
+
+
+JR_Jan_Conversion <- left_join(JR_Jan_LeadsUploaded,JR_Jan_trythisGroup %>% group_by(Geo, Vendor) %>% summarise(Inquiries = sum(Inquiry)))
+
+
+JR_Jan_Conversion$Inquiries[is.na(JR_Jan_Conversion$Inquiries)] <- 0
+
+kable(JR_Jan_Conversion %>% mutate(Inquiry_Yield = 
+          paste0(round(Inquiries/Leads * 100,2), "%")))
+```
+
+# FY20 January Sophomore Search
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+PH_Jan_queried_records <- read.csv("C:/Users/christine.iyer/Box/Search Test/Tidied Data Sets/FY20_January_PH.csv", header = T, stringsAsFactors = F)
+
+PH_Jan_queried_records <- PH_Jan_queried_records %>%
+  mutate(Geo = ifelse(Primary_State_Code__c == "ME", "In-State", "Out-of-State")) %>% filter(TargetX_SRMb__Anticipated_Start_Year__c == 2022)
+
+PH_Jan_LeadsUploaded <- read.csv("C:/Users/christine.iyer/Box/Search Test/SF Data/FY20_January_PH_DeDuped_Upload.csv", header = T, stringsAsFactors = F)
+
+ 
+
+PH_Jan_LeadsUploaded <- PH_Jan_LeadsUploaded %>% 
+  mutate(Geo = ifelse(Primary.State.Province == "Maine", "In-State", "Out-of-State"), 
+         Vendor = ifelse(Lead.Segment.NRCCUA == "", "CB", 
+                         ifelse(Lead.Segment.College.Board == "", "NRCCUA", "Both")))
+# %>%
+#   group_by(Geo, Vendor) %>% 
+#   summarise(Leads = n())
+PH_Jan_trythis <- merge(PH_Jan_LeadsUploaded, PH_Jan_queried_records, by = "Email" )
+
+
+
+PH_Jan_trythis <- PH_Jan_trythis %>% mutate(DateCollected = Sys.Date(), 
+                              Vendor = ifelse(Lead.Segment.NRCCUA == "", "CB", 
+                         ifelse(Lead.Segment.College.Board == "", "NRCCUA", "Both")))
+
+
+PH_Jan_trythisGroup <- PH_Jan_trythis %>% group_by(Geo = Geo.y, Vendor = Vendor, TargetX_SRMb__Status__c) %>% summarise(n = n()) %>% spread(TargetX_SRMb__Status__c,n) 
+PH_Jan_trythisGroup$Inquiry[is.na(PH_Jan_trythisGroup$Inquiry)] <- 0
+
+
+
+PH_Jan_trythisGroup <- PH_Jan_trythisGroup %>% mutate(Inquiry =  sum(Inquiry)) %>% select(Geo, Vendor, Inquiry)
+
+#
+PH_Jan_LeadsUploaded <- PH_Jan_LeadsUploaded %>% 
+  group_by(Geo, Vendor
+           ) %>% summarise(Leads = n())
+
+
+PH_Jan_Conversion <- left_join(PH_Jan_LeadsUploaded,PH_Jan_trythisGroup %>% group_by(Geo, Vendor) %>% summarise(Inquiries = sum(Inquiry)))
+
+
+PH_Jan_Conversion$Inquiries[is.na(PH_Jan_Conversion$Inquiries)] <- 0
+
+kable(PH_Jan_Conversion %>% mutate(Inquiry_Yield = 
+          paste0(round(Inquiries/Leads * 100,2), "%")))
+```
+
+# FY20 April Junior Search
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+JR_April_queried_records <- read.csv("C:/Users/christine.iyer/Box/Search Test/Tidied Data Sets/FY20_April_JR.csv", header = T, stringsAsFactors = F)
+
+JR_April_queried_records <- JR_April_queried_records %>%
+  mutate(Geo = ifelse(Primary_State_Code__c == "ME", "In-State", "Out-of-State")) %>% filter(TargetX_SRMb__Anticipated_Start_Year__c == 2021)
+
+JR_April_LeadsUploaded <- read.csv("C:/Users/christine.iyer/Box/Search Test/SF Data/FY20_April_JR_DeDuped_Upload.csv", header = T, stringsAsFactors = F)
+
+ 
+
+JR_April_LeadsUploaded <- JR_April_LeadsUploaded %>% 
+  mutate(Geo = ifelse(Primary.State.Province == "Maine", "In-State", "Out-of-State"), 
+         Vendor = ifelse(Lead.Segment.NRCCUA == "", "CB", 
+                         ifelse(Lead.Segment.College.Board == "", "NRCCUA", "Both")))
+# %>%
+#   group_by(Geo, Vendor) %>% 
+#   summarise(Leads = n())
+JR_April_trythis <- merge(JR_April_LeadsUploaded, JR_April_queried_records, by = "Email" )
+
+
+
+JR_April_trythis <- JR_April_trythis %>% mutate(DateCollected = Sys.Date(), 
+                              Vendor = ifelse(Lead.Segment.NRCCUA == "", "CB", 
+                         ifelse(Lead.Segment.College.Board == "", "NRCCUA", "Both")))
+
+
+JR_April_trythisGroup <- JR_April_trythis %>% group_by(Geo = Geo.y, Vendor = Vendor, TargetX_SRMb__Status__c) %>% summarise(n = n()) %>% spread(TargetX_SRMb__Status__c,n) 
+JR_April_trythisGroup$Inquiry[is.na(JR_April_trythisGroup$Inquiry)] <- 0
+
+
+
+JR_April_trythisGroup <- JR_April_trythisGroup %>% mutate(Inquiry =  sum(Inquiry)) %>% select(Geo, Vendor, Inquiry)
+
+#
+JR_April_LeadsUploaded <- JR_April_LeadsUploaded %>% 
+  group_by(Geo, Vendor
+           ) %>% summarise(Leads = n())
+
+
+JR_April_Conversion <- left_join(JR_April_LeadsUploaded,JR_April_trythisGroup %>% group_by(Geo, Vendor) %>% summarise(Inquiries = sum(Inquiry)))
+
+
+JR_April_Conversion$Inquiries[is.na(JR_April_Conversion$Inquiries)] <- 0
+
+kable(JR_April_Conversion %>% mutate(Inquiry_Yield = 
+          paste0(round(Inquiries/Leads * 100,2), "%")))
+```
+
+
+# FY20 April Sophomore Search
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+PH_April_queried_records <- read.csv("C:/Users/christine.iyer/Box/Search Test/Tidied Data Sets/FY20_April_PH.csv", header = T, stringsAsFactors = F)
+
+PH_April_queried_records <- PH_April_queried_records %>%
+  mutate(Geo = ifelse(Primary_State_Code__c == "ME", "In-State", "Out-of-State")) %>% filter(TargetX_SRMb__Anticipated_Start_Year__c == 2022)
+
+PH_April_LeadsUploaded <- read.csv("C:/Users/christine.iyer/Box/Search Test/SF Data/FY20_April_PH_DeDuped_Upload.csv", header = T, stringsAsFactors = F)
+
+ 
+
+PH_April_LeadsUploaded <- PH_April_LeadsUploaded %>% 
+  mutate(Geo = ifelse(Primary.State.Province == "Maine", "In-State", "Out-of-State"), 
+         Vendor = ifelse(Lead.Segment.NRCCUA == "", "CB", 
+                         ifelse(Lead.Segment.College.Board == "", "NRCCUA", "Both")))
+# %>%
+#   group_by(Geo, Vendor) %>% 
+#   summarise(Leads = n())
+PH_April_trythis <- merge(PH_April_LeadsUploaded, PH_April_queried_records, by = "Email" )
+
+
+
+PH_April_trythis <- PH_April_trythis %>% mutate(DateCollected = Sys.Date(), 
+                              Vendor = ifelse(Lead.Segment.NRCCUA == "", "CB", 
+                         ifelse(Lead.Segment.College.Board == "", "NRCCUA", "Both")))
+
+
+PH_April_trythisGroup <- PH_April_trythis %>% group_by(Geo = Geo.y, Vendor = Vendor, TargetX_SRMb__Status__c) %>% summarise(n = n()) %>% spread(TargetX_SRMb__Status__c,n) 
+PH_April_trythisGroup$Inquiry[is.na(PH_April_trythisGroup$Inquiry)] <- 0
+
+
+
+PH_April_trythisGroup <- PH_April_trythisGroup %>% mutate(Inquiry =  sum(Inquiry)) %>% select(Geo, Vendor, Inquiry)
+
+#
+PH_April_LeadsUploaded <- PH_April_LeadsUploaded %>% 
+  group_by(Geo, Vendor
+           ) %>% summarise(Leads = n())
+
+
+PH_April_Conversion <- left_join(PH_April_LeadsUploaded,PH_April_trythisGroup %>% group_by(Geo, Vendor) %>% summarise(Inquiries = sum(Inquiry)))
+
+
+PH_April_Conversion$Inquiries[is.na(PH_April_Conversion$Inquiries)] <- 0
+
+kable(PH_April_Conversion %>% mutate(Inquiry_Yield = 
+          paste0(round(Inquiries/Leads * 100,2), "%")))
+```
+

@@ -1,0 +1,15 @@
+base
+methods
+datasets
+utils
+grDevices
+graphics
+stats
+rmarkdown
+knitr
+dplyr
+salesforcer
+RForcecom
+tidyr
+tinytex
+knitcitations
