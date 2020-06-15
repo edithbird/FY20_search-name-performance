@@ -1,7 +1,7 @@
 ---
-title: "Untitled"
+title: "FY20 Search: Lead Name Conversions"
 author: "Office of Marketing and Brand Management"
-date: "6/11/2020"
+date: "6/15/2020"
 output: pdf_document
 ---
 
@@ -44,17 +44,17 @@ SR_Nov_trythis <- merge(SR_Nov_LeadsUploaded, SR_Nov_queried_records, by = "Emai
 # categorize
 SR_Nov_trythisGrouped <- SR_Nov_trythis %>% mutate(
   Vendor = ifelse(grepl('^N', Recruiting.Category), 'NRCCUA', 'College Board'),
-   Class = ifelse(grepl('SR', Recruiting.Category), 'Senior', 'Junior') ,
+   # Class = ifelse(grepl('SR', Recruiting.Category), 'Senior', 'Junior') ,
     Geo = ifelse(grepl('O', Recruiting.Category), 'Out-of-State', 'In-State'))
 
 
-SR_Nov_trythisGroupedStatus <- SR_Nov_trythisGrouped %>% group_by(Vendor, Class, Geo,
+SR_Nov_trythisGroupedStatus <- SR_Nov_trythisGrouped %>% group_by(Vendor,  Geo,
                                                     TargetX_SRMb__Status__c) %>% summarise(n = n())
 
-SR_Nov_trythisGroupedStatus <- SR_Nov_trythisGroupedStatus %>% spread(TargetX_SRMb__Status__c, n) %>% mutate_at(4:5, ~replace(., is.na(.), 0))
+SR_Nov_trythisGroupedStatus <- SR_Nov_trythisGroupedStatus %>% spread(TargetX_SRMb__Status__c, n) %>% mutate_at(3:4, ~replace(., is.na(.), 0))
 
 SR_Nov_trythisGroupedStatus <- SR_Nov_trythisGroupedStatus %>%
-  group_by(Vendor, Class, Geo) %>% 
+  group_by(Vendor, Geo) %>% 
   summarise(
   Inquiry = (sum(Inquiry) + sum(Applicant)), 
   Applicant = sum(Applicant))
@@ -62,9 +62,9 @@ SR_Nov_trythisGroupedStatus <- SR_Nov_trythisGroupedStatus %>%
 SR_Nov_LeadsUploaded <- SR_Nov_LeadsUploaded %>% 
   mutate(
   Vendor = ifelse(grepl('^N', Recruiting.Category), 'NRCCUA', 'College Board'),
-   Class = ifelse(grepl('SR', Recruiting.Category), 'Senior', 'Junior'),
+   # Class = ifelse(grepl('SR', Recruiting.Category), 'Senior', 'Junior'),
   Geo = ifelse(grepl('O', Recruiting.Category), 'Out-of-State', 'In-State')) %>% 
-  group_by(Geo,Class, Vendor
+  group_by(Geo, Vendor
            ) %>% summarise(Leads = n())
 
 SR_Nov_Final <- left_join(SR_Nov_LeadsUploaded, SR_Nov_trythisGroupedStatus)
@@ -96,17 +96,17 @@ JR_Nov_trythis <- merge(JR_Nov_LeadsUploaded, JR_Nov_queried_records, by = "Emai
 # categorize
 JR_Nov_trythisGrouped <- JR_Nov_trythis %>% mutate(
   Vendor = ifelse(grepl('^N', Recruiting.Category), 'NRCCUA', 'College Board'),
-   Class = ifelse(grepl('SR', Recruiting.Category), 'Senior', 'Junior') ,
+   # Class = ifelse(grepl('SR', Recruiting.Category), 'Senior', 'Junior') ,
     Geo = ifelse(grepl('O', Recruiting.Category), 'Out-of-State', 'In-State'))
 
 
-JR_Nov_trythisGroupedStatus <- JR_Nov_trythisGrouped %>% group_by(Vendor, Class, Geo,
+JR_Nov_trythisGroupedStatus <- JR_Nov_trythisGrouped %>% group_by(Vendor,  Geo,
                                                     TargetX_SRMb__Status__c) %>% summarise(n = n())
 
 # JR_Nov_trythisGroupedStatus <- JR_Nov_trythisGroupedStatus %>% spread(TargetX_SRMb__Status__c, n) %>% mutate_at(4:5, ~replace(., is.na(.), 0))
 
 JR_Nov_trythisGroupedStatus <- JR_Nov_trythisGroupedStatus %>%
-  group_by(Vendor, Class, Geo) %>% 
+  group_by(Vendor, Geo) %>% 
   summarise(
   Inquiries = (sum(n) 
   #              + sum(Applicant)), 
@@ -116,9 +116,9 @@ JR_Nov_trythisGroupedStatus <- JR_Nov_trythisGroupedStatus %>%
 JR_Nov_LeadsUploaded <- JR_Nov_LeadsUploaded %>% 
   mutate(
   Vendor = ifelse(grepl('^N', Recruiting.Category), 'NRCCUA', 'College Board'),
-   Class = ifelse(grepl('SR', Recruiting.Category), 'Senior', 'Junior'),
+   # Class = ifelse(grepl('SR', Recruiting.Category), 'Senior', 'Junior'),
   Geo = ifelse(grepl('O', Recruiting.Category), 'Out-of-State', 'In-State')) %>% 
-  group_by(Geo,Class, Vendor
+  group_by(Geo, Vendor
            ) %>% summarise(Leads = n())
 
 JR_Nov_Final <- left_join(JR_Nov_LeadsUploaded, JR_Nov_trythisGroupedStatus)
